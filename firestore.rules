@@ -1,0 +1,148 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document.
+     * CRITICAL: Used for all state-changing update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Checks if the user has admin privileges.
+     * Admin status is granted by the existence of a document in /roles_admin.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+
+    // ------------------------------------------------------------------------
+    // User Data (/users)
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Manages user profile documents. A user can create their own profile,
+     *              and can only read or write their own data.
+     * @path        /users/{userId}
+     * @allow       (create) A new user with UID 'user123' creating their own profile at `/users/user123`.
+     * @deny        (get) User 'user123' trying to read `/users/user456`.
+     * @deny        (list) Any user trying to list all documents in the `/users` collection.
+     * @principle   Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Manages a user's private chat messages.
+       * @path        /users/{userId}/chat_messages/{messageId}
+       * @allow       (create) User 'user123' creating a new chat message in their own subcollection.
+       * @deny        (get) User 'user456' trying to read a chat message from `/users/user123/chat_messages/...`.
+       * @principle   Enforces document ownership within a user's private data tree.
+       */
+      match /chat_messages/{messageId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) && resource != null;
+        allow delete: if isOwner(userId) && resource != null;
+      }
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Global & Admin Collections
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Stores content uploaded by administrators. All signed-in users can
+     *              read this content, but only admins can create, update, or delete it.
+     * @path        /admin_content/{contentId}
+     * @allow       (get) Any signed-in user reading an admin content document.
+     * @allow       (create) An admin user creating a new content document.
+     * @deny        (create) A regular, non-admin user trying to create a content document.
+     * @principle   Implements role-based access control (RBAC) for writes.
+     */
+    match /admin_content/{contentId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Stores details for members. Only administrators are allowed to
+     *              read or write this information.
+     * @path        /member_details/{memberId}
+     * @allow       (get) An admin user reading a member's details.
+     * @deny        (get) A regular, non-admin user trying to read member details.
+     * @principle   Restricts access to sensitive data to privileged admin roles.
+     */
+    match /member_details/{memberId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Defines the access control settings for the application. These
+     *              settings can be read by any signed-in user but can only be modified by admins.
+     * @path        /access_control/{accessControlId}
+     * @allow       (get) Any signed-in user reading the access control settings.
+     * @allow       (update) An admin user updating an access control document.
+     * @deny        (update) A regular user attempting to change access control settings.
+     * @principle   Protects application-wide settings with role-based write restrictions.
+     */
+    match /access_control/{accessControlId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Manages admin role grants. The existence of a document grants admin
+     *              privileges. This collection is read-only from the client to prevent privilege escalation.
+     * @path        /roles_admin/{userId}
+     * @allow       (get) An admin checking if another user (`userId`) is also an admin.
+     * @deny        (create) Any user (including an admin) trying to make someone else an admin from the client.
+     * @principle   Prevents client-side privilege escalation. Role management must be done server-side.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

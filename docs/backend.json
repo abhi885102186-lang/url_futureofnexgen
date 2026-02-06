@@ -1,0 +1,290 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile in the Nexus Assistant application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "User's full name."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "User's mobile phone number."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL of the user's profile image.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name"
+      ]
+    },
+    "ChatMessage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChatMessage",
+      "type": "object",
+      "description": "Represents a single chat message within the Nexus Assistant application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ChatMessage entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N ChatMessage)"
+        },
+        "message": {
+          "type": "string",
+          "description": "Content of the chat message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the message was sent.",
+          "format": "date-time"
+        },
+        "isUserGenerated": {
+          "type": "boolean",
+          "description": "Indicates if the message was sent by the user or the AI assistant."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "message",
+        "timestamp",
+        "isUserGenerated"
+      ]
+    },
+    "AdminContent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdminContent",
+      "type": "object",
+      "description": "Represents content uploaded by the administrator (PDF, Excel files, etc.) in the Nexus Assistant application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AdminContent entity."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "Type of content (e.g., PDF, EXCEL)."
+        },
+        "contentUrl": {
+          "type": "string",
+          "description": "URL where the content is stored.",
+          "format": "uri"
+        },
+        "uploadTimestamp": {
+          "type": "string",
+          "description": "Timestamp of when the content was uploaded.",
+          "format": "date-time"
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The user-friendly name of the uploaded file."
+        }
+      },
+      "required": [
+        "id",
+        "contentType",
+        "contentUrl",
+        "uploadTimestamp",
+        "fileName"
+      ]
+    },
+    "MemberDetail": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MemberDetail",
+      "type": "object",
+      "description": "Represents details of a member in the Nexus Assistant application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MemberDetail entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Member's name."
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "Member's mobile phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "Member's email address.",
+          "format": "email"
+        },
+        "joinDate": {
+          "type": "string",
+          "description": "Date when the member joined.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "mobileNumber",
+        "email",
+        "joinDate"
+      ]
+    },
+    "AccessControl": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AccessControl",
+      "type": "object",
+      "description": "Represents access control settings for different user roles in the Nexus Assistant application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the AccessControl entity."
+        },
+        "roleName": {
+          "type": "string",
+          "description": "Name of the user role (e.g., Admin, User)."
+        },
+        "canRead": {
+          "type": "boolean",
+          "description": "Indicates if the role has read access."
+        },
+        "canDelete": {
+          "type": "boolean",
+          "description": "Indicates if the role has delete access."
+        }
+      },
+      "required": [
+        "id",
+        "roleName",
+        "canRead",
+        "canDelete"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profiles. Keyed by userId. Enables path-based authorization.  The document ID is equal to the user's Firebase auth UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase auth UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/chat_messages/{messageId}",
+        "definition": {
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Stores chat messages for each user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase auth UID of the user."
+            },
+            {
+              "name": "messageId",
+              "description": "Unique identifier for the chat message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/admin_content/{contentId}",
+        "definition": {
+          "entityName": "AdminContent",
+          "schema": {
+            "$ref": "#/backend/entities/AdminContent"
+          },
+          "description": "Stores content uploaded by administrators. Access controlled by the 'roles_admin' collection.",
+          "params": [
+            {
+              "name": "contentId",
+              "description": "Unique identifier for the admin content."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/member_details/{memberId}",
+        "definition": {
+          "entityName": "MemberDetail",
+          "schema": {
+            "$ref": "#/backend/entities/MemberDetail"
+          },
+          "description": "Stores details for each member. Access controlled by the AccessControl document.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "Unique identifier for the member detail."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/access_control/{accessControlId}",
+        "definition": {
+          "entityName": "AccessControl",
+          "schema": {
+            "$ref": "#/backend/entities/AccessControl"
+          },
+          "description": "Stores access control settings for different roles.",
+          "params": [
+            {
+              "name": "accessControlId",
+              "description": "Unique identifier for the access control settings."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Collection to define admin roles. Existence of a document grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase auth UID of the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "Given the entities and the requirement for a secure and scalable backend for the Nexus Assistant application, the following Firestore structure is recommended:\n\n1.  **User Profiles:** `/users/{userId}`. Each user has their own document, keyed by their `userId`. This enables path-based authorization for private user data, ensuring only the user can access their profile.\n2.  **Chat Messages:** `/users/{userId}/chat_messages/{messageId}`.  This structure establishes a clear ownership hierarchy. Each message is directly tied to a specific user, making it easy to implement security rules based on user ownership. The `userId` is denormalized into the `ChatMessage` entity, enabling authorization independence (eliminating the need for `get()` calls in security rules).\n3.  **Admin Content:** `/admin_content/{contentId}`.  This collection stores content uploaded by administrators. Access control is managed via a separate `roles_admin` collection (see below).\n4.  **Member Details:** `/member_details/{memberId}`. Stores details for each member. The security for this is handled via the `AccessControl` document below.\n5.  **Access Control:** `/access_control/{accessControlId}`. This collection stores access control settings for different roles. \n6.  **Admin Roles:** `/roles_admin/{userId}`.  This collection uses the \"Existence over Content\" principle. The mere existence of a document with a `userId` in this collection grants the user admin privileges. This is a simple and efficient way to manage admin roles. Rules will check for the existence of the document at this path.  This removes the need to store custom claims.\n\n**Authorization Independence & QAPs:**\n\n*   The `/users/{userId}/chat_messages/{messageId}` path denormalizes the `userId` into each `ChatMessage` document. This allows rules to authorize reads/writes based solely on the document's contents and the `request.auth.uid`, without needing to `get()` the parent user document.\n*   QAPs (Rules are not Filters): The segregation of data into collections with homogeneous security postures (e.g., `/users/{userId}` for private user data, `/admin_content` for admin-managed data) allows for efficient and secure `list` operations. Rules can grant access to entire collections based on simple conditions, without needing to filter documents based on their contents.\n\nThis structure adheres to the core design principles:\n\n*   **Authorization Independence:** Achieved through denormalization of ownership data.\n*   **Clarity of Intent:** The structure clearly expresses the authorization model through path-based ownership and dedicated role collections.\n*   **DBAC (No Custom Claims):** Roles are stored in the database using existence-based checks.\n*   **QAPs (Rules are not Filters):** Achieved through structural segregation and appropriate data modeling.\n*   **Invariants:** The structure supports the integrity of ownership and timestamps, ensuring data consistency."
+  }
+}

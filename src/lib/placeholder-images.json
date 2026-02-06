@@ -1,0 +1,22 @@
+{
+  "placeholderImages": [
+    {
+      "id": "profile-avatar",
+      "description": "A placeholder for a user's profile avatar.",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjM4NDAwOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "login-background",
+      "description": "Abstract futuristic background for login screen.",
+      "imageUrl": "https://images.unsplash.com/photo-1579548122080-c35fd6820ecb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxhYnN0cmFjdCUyMHRlY2hub2xvZ3l8ZW58MHx8fHwxNzYzODEwOTA5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract technology"
+    },
+    {
+      "id": "soundwave-background",
+      "description": "A futuristic sound wave visualization.",
+      "imageUrl": "https://images.unsplash.com/photo-1592942484555-fb93a8c42503?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzb3VuZCUyMHdhdmV8ZW58MHx8fHwxNzM3OTMyOTM2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sound wave"
+    }
+  ]
+}
